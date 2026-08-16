@@ -1,0 +1,9 @@
+M-PESA QR MVP
+================
+Bundled QR: images/mpesa-uchumi-till-893226.png
+Merchant Till: 893226
+
+This MVP QR carries the receiver/till identifier only. The M-PESA app should
+prompt for the amount after scanning. A dynamic amount QR is a separate
+Safaricom/Daraja Dynamic QR integration and should be implemented once
+Uchumi provides the required Daraja access/credentials.
