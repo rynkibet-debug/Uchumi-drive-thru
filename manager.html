@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uchumi Langata Road — Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Password gate -->
+<div class="password-gate" id="gate">
+  <div class="gate-card">
+    <h2>Manager Dashboard</h2>
+    <p class="gate-sub">Uchumi Langata Road</p>
+    <input type="password" id="gatePassword" placeholder="Manager password" autocomplete="off">
+    <button onclick="checkPassword()">Enter</button>
+    <div class="gate-error" id="gateError"></div>
+  </div>
+</div>
+
+<!-- Dashboard (hidden until password check passes) -->
+<div id="dashboard" style="display:none;">
+
+  <header>
+    <div class="brand">
+      <div class="titles">
+        <div class="t1">Manager Dashboard</div>
+        <div class="t2">Uchumi Langata Road</div>
+      </div>
+    </div>
+    <div class="hdr-actions">
+      <a class="manager-link" href="index.html">Back to till</a>
+    </div>
+  </header>
+
+  <div class="dash-wrap">
+
+    <!-- Section A: Daily report -->
+    <section class="dash-section">
+      <div class="dash-section-head">
+        <div>
+          <h2>Daily report</h2>
+          <p class="section-hint">Successful orders only — cancelled orders are excluded from revenue.</p>
+        </div>
+        <div class="controls">
+          <input type="date" id="dailyDate">
+          <button class="btn" onclick="renderDailyReport()">Refresh</button>
+          <button class="btn btn-primary" onclick="printDailyReport()">Print report</button>
+          <button class="btn" onclick="exportCSV('daily')">Export CSV</button>
+        </div>
+      </div>
+      <div class="stat-grid" id="dailyStats"></div>
+    </section>
+
+    <!-- Section B: Monthly report -->
+    <section class="dash-section">
+      <div class="dash-section-head">
+        <div>
+          <h2>Monthly report</h2>
+          <p class="section-hint">Totals for the selected month, successful orders only.</p>
+        </div>
+        <div class="controls">
+          <input type="month" id="monthlyMonth">
+          <button class="btn" onclick="renderMonthlyReport()">Refresh</button>
+          <button class="btn btn-primary" onclick="printMonthlyReport()">Print report</button>
+          <button class="btn" onclick="exportCSV('monthly')">Export CSV</button>
+        </div>
+      </div>
+      <div class="stat-grid" id="monthlyStats"></div>
+    </section>
+
+    <!-- Section C: Auto-close log -->
+    <section class="dash-section">
+      <div class="dash-section-head">
+        <div>
+          <h2>Auto-close log</h2>
+          <p class="section-hint">Every day is automatically closed and totalled at midnight while this page is open.</p>
+        </div>
+        <div class="controls">
+          <span class="status-pill" id="lastClosedPill">—</span>
+        </div>
+      </div>
+      <table class="table-simple">
+        <thead>
+          <tr><th>Date</th><th>Orders</th><th>Revenue (KES)</th><th>Closed at</th><th></th></tr>
+        </thead>
+        <tbody id="closedDaysBody">
+          <tr class="empty-row"><td colspan="5">No days closed yet.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Section D: Manager tools -->
+    <section class="dash-section">
+      <h2>Manager tools</h2>
+      <p class="section-hint">Cancelled orders, sync queue, order lookup, and system status.</p>
+
+      <div class="tools-grid">
+        <div class="tool-block">
+          <h3>Today's cancelled orders</h3>
+          <table class="table-simple">
+            <thead><tr><th>Order ID</th><th>Items</th><th>Amount</th><th>Cancelled at</th></tr></thead>
+            <tbody id="cancelledBody"><tr class="empty-row"><td colspan="4">None today.</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="tool-block">
+          <h3>Pending sync queue</h3>
+          <div class="dash-section-head" style="margin-bottom:10px;">
+            <span class="status-pill" id="onlinePill">—</span>
+            <button class="btn btn-dark" onclick="forceSyncNow()">Force sync now</button>
+          </div>
+          <table class="table-simple">
+            <thead><tr><th>Order ID</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody id="pendingBody"><tr class="empty-row"><td colspan="3">Nothing pending.</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="tool-block">
+          <h3>Search order by ID</h3>
+          <div class="search-row">
+            <input type="text" id="searchOrderId" placeholder="e.g. LANG-20260902-001">
+            <button class="btn btn-primary" onclick="searchOrder()">Search</button>
+          </div>
+          <div class="search-result" id="searchResult">Enter an Order ID above.</div>
+        </div>
+
+        <div class="tool-block">
+          <h3>System status</h3>
+          <div class="system-status-grid" id="systemStatus"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="dash-section">
+      <h2>Settings</h2>
+      <p class="section-hint">Changes apply immediately and are stored on this device.</p>
+      <div class="settings-grid">
+        <div class="settings-field">
+          <label>Manager password</label>
+          <div class="field-row">
+            <input type="password" id="newManagerPassword" placeholder="New password">
+            <button class="btn" onclick="saveManagerPassword()">Save</button>
+          </div>
+        </div>
+        <div class="settings-field">
+          <label>Cancel order PIN</label>
+          <div class="field-row">
+            <input type="text" id="newCancelPin" placeholder="New PIN">
+            <button class="btn" onclick="saveCancelPin()">Save</button>
+          </div>
+        </div>
+        <div class="settings-field" style="grid-column:1 / -1;">
+          <label>Google Sheets Web App URL</label>
+          <div class="field-row">
+            <input type="text" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/…/exec">
+            <button class="btn" onclick="saveSheetsUrl()">Save</button>
+          </div>
+          <div class="field-note">From Apps Script &gt; Deploy &gt; New deployment &gt; Web app. See the deployment guide that came with this project.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Danger zone -->
+    <section class="dash-section">
+      <h2>Danger zone</h2>
+      <div class="danger-zone">
+        <h3>Clear today's data</h3>
+        <p>Removes today's orders from this device's local storage. This cannot be undone and does not affect Google Sheets. Requires the manager password twice.</p>
+        <button class="btn btn-danger" onclick="clearTodayData()">Clear today's data</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Print area for daily / monthly / closed-day reports.
+     Reuses the same #printArea > .receipt structure and print CSS
+     as the customer receipt in index.html. -->
+<div id="printArea">
+  <div class="receipt" id="reportReceipt">
+    <div class="sub">UCHUMI</div>
+    <div class="sub" style="margin-top:-6px;">Uchumi Langata Road</div>
+    <div class="receipt-title" id="reportTitle">Daily report</div>
+    <div class="addr" id="reportPeriod"></div>
+    <hr>
+    <div id="reportRows"></div>
+    <div class="footer">
+      <p class="tagline" id="reportFooter">Auto-generated report</p>
+    </div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script src="manager.js"></script>
+</body>
+</html>

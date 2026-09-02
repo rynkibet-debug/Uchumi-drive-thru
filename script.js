@@ -167,6 +167,9 @@ const menu = [
 
 let activeCat = 0;
 let cart = [];
+let currentOrderId = null; // set once the current bill is saved; cleared on New bill
+// currency(), storage helpers, generateOrderId(), attemptSync(), etc.
+// live in common.js, loaded before this file.
 
 function currency(n){
   return 'KES ' + Math.round(n).toLocaleString('en-KE');
@@ -311,6 +314,7 @@ function renderCart(){
 function newBill(){
   if(cart.length && !confirm('Start a new bill? This clears the current items.')) return;
   cart = [];
+  currentOrderId = null;
   document.getElementById('discountRate').value = 0;
   document.getElementById('orderNo').value = '';
   document.getElementById('servedBy').value = '';
@@ -320,6 +324,12 @@ function newBill(){
 
 function printBill(){
   if(cart.length === 0) return;
+
+  const subtotalForSave = cart.reduce((s, it) => s + it.price * it.qty, 0);
+  const discountRateForSave = parseFloat(document.getElementById('discountRate').value) || 0;
+  const totalForSave = subtotalForSave - (subtotalForSave * discountRateForSave / 100);
+  const orderId = saveOrRefreshOrder(totalForSave);
+  document.getElementById('pReceiptNo').textContent = 'Receipt: ' + orderId;
 
   const now = new Date();
   document.getElementById('pDate').textContent = now.toLocaleDateString('en-KE', {day:'2-digit', month:'short', year:'numeric'});
@@ -361,6 +371,7 @@ function printBill(){
   document.getElementById('pTotal').textContent = currency(total);
 
   window.print();
+  showToast('Order ' + orderId + ' saved');
 }
 
 renderTabs();
@@ -370,5 +381,76 @@ renderCart();
 function getBillTotal(){const subtotal=cart.reduce((s,it)=>s+it.price*it.qty,0);const rate=parseFloat(document.getElementById('discountRate').value)||0;return subtotal-(subtotal*rate/100);}
 function openMpesaModal(){if(!cart.length)return;document.getElementById('mpesaAmount').textContent=currency(getBillTotal());document.getElementById('mpesaModal').classList.add('open');}
 function closeMpesaModal(){document.getElementById('mpesaModal').classList.remove('open');}
-function markMpesaPaid(){closeMpesaModal();const t=document.getElementById('paymentToast');t.textContent='M-Pesa marked as paid';t.classList.add('show');clearTimeout(window.mpesaToastTimer);window.mpesaToastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
+function markMpesaPaid(){closeMpesaModal();showToast('M-Pesa marked as paid');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMpesaModal();});
+
+function showToast(msg){
+  const t = document.getElementById('paymentToast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.mpesaToastTimer);
+  window.mpesaToastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* Creates (once) or reuses (on reprint) the order record for the
+   current bill via common.js, then kicks off a background sync. */
+function saveOrRefreshOrder(total){
+  if(currentOrderId) return currentOrderId;
+
+  const now = new Date();
+  const order = {
+    orderId: generateOrderId(),
+    branch: BRANCH_NAME,
+    date: dateStr(now),
+    time: timeStr(now),
+    timestamp: now.toISOString(),
+    items: buildItemsString(cart),
+    total: Math.round(total),
+    status: 'SUCCESS',
+    cancelledAt: null
+  };
+
+  const orders = loadOrders();
+  orders.push(order);
+  saveOrders(orders);
+  currentOrderId = order.orderId;
+
+  attemptSync(order);
+  return order.orderId;
+}
+
+/* Cancel an order: cashier enters the Order ID printed on the
+   receipt plus the manager PIN. Cancelled orders are never deleted —
+   only marked CANCELLED so they drop out of revenue totals while
+   staying in the record. */
+function cancelOrderFlow(){
+  const orderId = prompt('Enter the Order ID to cancel (printed on the receipt):');
+  if(!orderId) return;
+
+  const pin = prompt('Enter Manager PIN:');
+  if(pin === null) return;
+
+  const storedPin = localStorage.getItem('cancelPin') || '1234';
+  if(pin !== storedPin){
+    alert('Incorrect PIN.');
+    return;
+  }
+
+  const orders = loadOrders();
+  const order = orders.find(o => o.orderId === orderId.trim());
+  if(!order){
+    alert('No order with that ID was found on this device.');
+    return;
+  }
+  if(order.status === 'CANCELLED'){
+    alert('That order is already cancelled.');
+    return;
+  }
+
+  order.status = 'CANCELLED';
+  order.cancelledAt = new Date().toISOString();
+  saveOrders(orders);
+  attemptSync(order);
+  showToast('Order ' + order.orderId + ' cancelled');
+}

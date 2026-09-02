@@ -14,7 +14,7 @@
   --cream:#FAF8F5;
   --card:#FFFFFF;
   --line:#E7E2DA;
-  --green:#159447;
+  --green:#0cca58;
   --green-dark:#0D7135;
   --shadow-sm:0 2px 8px rgba(26,23,23,.06);
   --shadow-md:0 10px 30px rgba(26,23,23,.10);
@@ -814,10 +814,14 @@ header button.primary:hover{
 /* =========================================================
    RECEIPT PRINT
    Matches the actual markup: <div id="printArea"><div class="receipt">…
-   This is the ONLY @media print block in the file — earlier drafts had
-   three overlapping ones (two targeted a nonexistent #receipt id and
-   one used !important to hide everything), which is why printing
-   produced a blank page.
+
+   Why it printed multiple pages: `visibility:hidden` on the rest of
+   the page still leaves those elements occupying layout space, and
+   the on-screen POS UI reflows very tall when squeezed into an 80mm
+   print width. The print engine then paginates across that invisible
+   height. Fix: `display:none` the real UI sections so they're
+   removed from layout entirely — the page then shrinks to exactly
+   the receipt's height.
    ========================================================= */
 #printArea{display:none;}
 
@@ -835,21 +839,16 @@ header button.primary:hover{
     background:#fff;
   }
 
-  body *{
-    visibility:hidden;
-  }
-
-  #printArea,
-  #printArea *{
-    visibility:visible;
+  header,
+  .app,
+  .payment-modal,
+  .payment-toast{
+    display:none !important;
   }
 
   #printArea{
     display:block;
-    position:absolute;
-    left:0;
-    top:0;
-    width:76mm;
+    width:100%;
   }
 
   .receipt{
@@ -857,8 +856,9 @@ header button.primary:hover{
     margin:0 auto;
     padding:1mm;
     font-family:'Space Mono',monospace;
-    font-weight:700;
+    font-weight:800;
     color:#000;
+    -webkit-text-stroke:0.3px #000;
     -webkit-print-color-adjust:exact;
     print-color-adjust:exact;
   }
@@ -866,6 +866,7 @@ header button.primary:hover{
   .receipt *{
     page-break-inside:avoid;
     break-inside:avoid;
+    font-weight:800 !important;
   }
 
   .receipt .brand-row{
@@ -984,4 +985,401 @@ header button.primary:hover{
     text-transform:uppercase;
     color:#000;
   }
+}
+
+/* =========================================================
+   MANAGER DASHBOARD (manager.html) + header link on index.html
+   ========================================================= */
+
+.manager-link{
+  display:inline-flex;
+  align-items:center;
+  min-height:42px;
+  padding:0 18px;
+  border-radius:8px;
+  border:1.5px solid var(--line);
+  background:var(--white);
+  color:var(--ink);
+  font-family:'Oswald',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:.15s ease;
+}
+
+.manager-link:hover{
+  border-color:var(--black);
+  color:var(--black);
+}
+
+.password-gate{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(235,28,34,.10),transparent 30%),
+    var(--black);
+  padding:20px;
+}
+
+.gate-card{
+  width:min(360px,100%);
+  background:var(--white);
+  border-radius:16px;
+  padding:30px 26px;
+  box-shadow:var(--shadow-lg);
+  text-align:center;
+}
+
+.gate-card h2{
+  margin:0 0 4px;
+  font-family:'Oswald',sans-serif;
+  font-size:19px;
+  color:var(--black);
+}
+
+.gate-card p.gate-sub{
+  margin:0 0 18px;
+  color:var(--ink-soft);
+  font-size:12px;
+}
+
+.gate-card input{
+  width:100%;
+  min-height:44px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--cream);
+  color:var(--ink);
+  font-size:14px;
+  margin-bottom:12px;
+  text-align:center;
+}
+
+.gate-card input:focus{
+  outline:none;
+  border-color:var(--red);
+  box-shadow:0 0 0 3px var(--red-soft);
+}
+
+.gate-card button{
+  width:100%;
+  min-height:46px;
+  border:none;
+  border-radius:9px;
+  background:var(--red);
+  color:#fff;
+  font-family:'Oswald',sans-serif;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.gate-card button:hover{background:var(--red-dark);}
+
+.gate-error{
+  min-height:16px;
+  margin-top:10px;
+  color:var(--red);
+  font-size:12px;
+  font-weight:600;
+}
+
+.dash-wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:26px 24px 60px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.dash-section{
+  background:var(--white);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:22px 24px;
+  box-shadow:var(--shadow-sm);
+}
+
+.dash-section h2{
+  margin:0 0 4px;
+  font-family:'Oswald',sans-serif;
+  font-size:17px;
+  font-weight:600;
+  color:var(--black);
+}
+
+.dash-section .section-hint{
+  margin:0 0 16px;
+  color:var(--ink-soft);
+  font-size:11px;
+}
+
+.dash-section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+
+.dash-section-head .controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.dash-section-head input[type="date"],
+.dash-section-head input[type="month"]{
+  min-height:38px;
+  padding:0 10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--cream);
+  color:var(--ink);
+  font-family:'Space Mono',monospace;
+  font-size:12.5px;
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:38px;
+  padding:0 16px;
+  border-radius:8px;
+  border:1.5px solid var(--line);
+  background:var(--white);
+  color:var(--ink);
+  font-family:'Oswald',sans-serif;
+  font-size:11.5px;
+  font-weight:700;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  transition:.15s ease;
+}
+
+.btn:hover{border-color:var(--red);color:var(--red);}
+
+.btn-primary{background:var(--red);border-color:var(--red);color:#fff;}
+.btn-primary:hover{background:var(--red-dark);border-color:var(--red-dark);color:#fff;}
+
+.btn-dark{background:var(--black);border-color:var(--black);color:#fff;}
+.btn-dark:hover{background:#000;border-color:#000;color:#fff;}
+
+.btn-danger{background:#fff;border-color:var(--red);color:var(--red);}
+.btn-danger:hover{background:var(--red);color:#fff;}
+
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+}
+
+.stat-card{
+  background:var(--cream);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 15px;
+}
+
+.stat-card .label{
+  display:block;
+  margin-bottom:6px;
+  color:var(--ink-soft);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+}
+
+.stat-card .value{
+  font-family:'Oswald',sans-serif;
+  font-size:20px;
+  font-weight:700;
+  color:var(--black);
+}
+
+.stat-card .value.small{font-size:14px;}
+
+.table-simple{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12.5px;
+}
+
+.table-simple th{
+  text-align:left;
+  padding:8px 10px;
+  background:var(--cream);
+  color:var(--ink-soft);
+  font-family:'Oswald',sans-serif;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  border-bottom:1px solid var(--line);
+}
+
+.table-simple td{
+  padding:9px 10px;
+  border-bottom:1px solid var(--line);
+  color:var(--ink);
+}
+
+.table-simple tr:last-child td{border-bottom:none;}
+
+.table-simple .empty-row td{
+  text-align:center;
+  color:var(--ink-soft);
+  padding:18px 10px;
+}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 10px;
+  border-radius:999px;
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+}
+
+.status-pill.online{background:#EAF8EF;color:var(--green-dark, #0D7135);}
+.status-pill.offline{background:var(--red-soft, rgba(212,42,30,.08));color:var(--red-dark);}
+.status-pill.cancelled{background:var(--red-soft, rgba(212,42,30,.08));color:var(--red-dark);}
+.status-pill.success{background:#EAF8EF;color:var(--green-dark, #0D7135);}
+
+.status-pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+.settings-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+@media (max-width:760px){
+  .settings-grid{grid-template-columns:1fr;}
+}
+
+.settings-field label{
+  display:block;
+  margin-bottom:6px;
+  color:var(--ink-soft);
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+}
+
+.settings-field .field-row{display:flex;gap:8px;}
+
+.settings-field input{
+  flex:1;
+  min-height:40px;
+  padding:0 12px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--cream);
+  color:var(--ink);
+  font-size:13px;
+}
+
+.settings-field input:focus{
+  outline:none;
+  border-color:var(--red);
+  box-shadow:0 0 0 3px var(--red-soft, rgba(212,42,30,.08));
+}
+
+.settings-field .field-note{
+  margin-top:5px;
+  color:var(--ink-soft);
+  font-size:10px;
+}
+
+.danger-zone{
+  border:1.5px dashed var(--red);
+  border-radius:12px;
+  padding:16px 18px;
+  background:var(--red-soft, rgba(212,42,30,.08));
+}
+
+.danger-zone h3{
+  margin:0 0 6px;
+  font-family:'Oswald',sans-serif;
+  font-size:13px;
+  color:var(--red-dark);
+  text-transform:uppercase;
+  letter-spacing:.6px;
+}
+
+.danger-zone p{margin:0 0 12px;color:var(--ink);font-size:12px;}
+
+.tools-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+
+@media (max-width:900px){
+  .tools-grid{grid-template-columns:1fr;}
+}
+
+.tool-block{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 16px;
+}
+
+.tool-block h3{
+  margin:0 0 10px;
+  font-family:'Oswald',sans-serif;
+  font-size:12.5px;
+  font-weight:700;
+  color:var(--black);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+.search-row{display:flex;gap:8px;margin-bottom:10px;}
+
+.search-row input{
+  flex:1;
+  min-height:38px;
+  padding:0 11px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--cream);
+  font-size:12.5px;
+}
+
+.search-result{font-size:12.5px;line-height:1.7;color:var(--ink);}
+
+.system-status-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;
+}
+
+.receipt .receipt-title{
+  font-family:'Oswald',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  text-align:center;
+  margin:2px 0 10px;
 }

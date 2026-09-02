@@ -20,7 +20,9 @@
   </div>
   <div class="hdr-actions">
     <button onclick="newBill()">New bill</button>
-    <button class="primary" id="printHeaderBtn" onclick="printBill()">Print bill</button>
+    <button onclick="cancelOrderFlow()">Cancel order</button>
+    <a class="manager-link" href="manager.html">Manager</a>
+    <button class="primary" id="printHeaderBtn" onclick="printBill()">Save &amp; print</button>
   </div>
 </header>
 
@@ -79,7 +81,7 @@
     </div>
 
     <button class="mpesa-btn" id="mpesaBtn" onclick="openMpesaModal()" disabled><span class="mpesa-icon">M</span><span>Pay with M-Pesa</span><small>Scan QR</small></button>
-    <button class="print-btn" id="printBtn" onclick="printBill()" disabled>Print bill</button>
+    <button class="print-btn" id="printBtn" onclick="printBill()" disabled>Save &amp; print</button>
   </div>
 
 </div>
@@ -93,6 +95,7 @@
       +254 741 692915 &nbsp;·&nbsp; Till No: 893226
     </div>
     <hr>
+    <div class="meta-row"><span id="pReceiptNo"></span><span></span></div>
     <div class="meta-row"><span id="pDate"></span><span id="pTime"></span></div>
     <div class="meta-row"><span id="pOrder"></span><span id="pServer"></span></div>
     <div class="meta-row" id="pCustRow" style="display:none;"><span id="pCust"></span><span></span></div>
@@ -112,6 +115,7 @@
   </div>
 </div>
 
+<script src="common.js"></script>
 <script src="script.js"></script>
 
 <div class="payment-toast" id="paymentToast"></div><div class="payment-modal" id="mpesaModal" aria-hidden="true"><div class="payment-backdrop" onclick="closeMpesaModal()"></div><div class="payment-dialog" role="dialog" aria-modal="true"><button class="payment-close" onclick="closeMpesaModal()">&times;</button><div class="payment-head"><div class="mpesa-badge">M</div><div><p class="payment-eyebrow">Mobile payment</p><h2>Pay with M-Pesa</h2></div></div><div class="payment-total"><span>Amount to pay</span><strong id="mpesaAmount">KES 0</strong></div><div class="qr-frame"><img src="images/mpesa-uchumi-till-893226.png" alt="Uchumi Deli M-Pesa QR code"></div><p class="scan-title">Scan this QR code</p><p class="scan-help">Open My OneApp, use Scan to Pay, scan this QR, enter the bill amount, then complete the payment.</p><div class="payment-actions"><button class="payment-secondary" onclick="closeMpesaModal()">Cancel</button><button class="payment-success" onclick="markMpesaPaid()">I've paid</button></div><p class="payment-note">QR payment only — no Daraja/API integration.</p></div></div>
