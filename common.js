@@ -1,17 +1,4 @@
-/* =========================================================
-   COMMON.JS — Uchumi Langata Road POS (single branch, offline-first)
-   Shared by index.html (cashier) and manager.html (manager).
 
-   localStorage keys:
-     restaurantOrders   — array of every order ever taken on this device
-     pendingSync        — orders that failed to reach Google Sheets
-     closedDays         — array of {date, totalRevenue, orderCount, closedAt}
-     lastClosedDate     — YYYY-MM-DD of the last day auto-closed
-     sheetsWebAppUrl    — Google Apps Script Web App URL
-     managerPassword    — manager dashboard password (default uchumi2025)
-     cancelPin          — PIN required to cancel an order (default 1234)
-     lastSyncTime       — ISO timestamp of the last successful sync
-   ========================================================= */
 
 const BRANCH_NAME = 'Uchumi Langata Road';
 const BRANCH_CODE = 'LANG';
@@ -49,6 +36,37 @@ function generateOrderId(){
 
 function buildItemsString(cartArr){
   return cartArr.map(it => it.name + (it.qty > 1 ? ' x' + it.qty : '')).join(', ');
+}
+
+/* ---------- Daily order number (the simple 1, 2, 3… ticket number
+   shown to the cashier and printed on the receipt). Resets on its
+   own every day because it's keyed by date — no midnight timer
+   needed, the first order after midnight just starts a fresh key. */
+
+/* Read-only: what the next number WOULD be, without consuming it.
+   Safe to call on every page load/refresh and every "New bill" —
+   none of those should burn a ticket number. */
+function peekDailyOrderNumber(){
+  const today = dateStr(new Date());
+  let counter;
+  try { counter = JSON.parse(localStorage.getItem('dailyOrderCounter')); }
+  catch(e){ counter = null; }
+  if(!counter || counter.date !== today) return 1;
+  return counter.count + 1;
+}
+
+
+function nextDailyOrderNumber(){
+  const today = dateStr(new Date());
+  let counter;
+  try { counter = JSON.parse(localStorage.getItem('dailyOrderCounter')); }
+  catch(e){ counter = null; }
+  if(!counter || counter.date !== today){
+    counter = { date: today, count: 0 };
+  }
+  counter.count += 1;
+  localStorage.setItem('dailyOrderCounter', JSON.stringify(counter));
+  return counter.count;
 }
 
 /* ---------- Pending sync queue ---------- */

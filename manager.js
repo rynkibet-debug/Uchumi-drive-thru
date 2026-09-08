@@ -1,14 +1,11 @@
-/* =========================================================
-   MANAGER.JS — Uchumi Langata Road POS
-   Depends on common.js (loaded first) for storage/stat helpers.
-   ========================================================= */
 
-let searchedOrder = null; // last order found via "Search order by ID"
+
+let searchedOrder = null; 
 
 /* ---------- Password gate ---------- */
 function checkPassword(){
   const input = document.getElementById('gatePassword').value;
-  const stored = localStorage.getItem('managerPassword') || 'uchumi2025';
+  const stored = localStorage.getItem('managerPassword') || 'uchumi2026';
   if(input === stored){
     document.getElementById('gate').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';

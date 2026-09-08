@@ -1,7 +1,4 @@
-/* =========================================================
-   UCHUMI DELI — brand system
-   Colours pulled from the official Uchumi logo / uchumisupermarkets.co.ke
-   ========================================================= */
+
 
 :root{
   --red:#EB1C22;
@@ -14,7 +11,7 @@
   --cream:#FAF8F5;
   --card:#FFFFFF;
   --line:#E7E2DA;
-  --green:#0cca58;
+  --green:#09ae4b;
   --green-dark:#0D7135;
   --shadow-sm:0 2px 8px rgba(26,23,23,.06);
   --shadow-md:0 10px 30px rgba(26,23,23,.10);
@@ -136,6 +133,36 @@ header button.primary:hover{
   border-left:1px solid var(--line);
   box-shadow:-10px 0 30px rgba(26,23,23,.03);
   min-height:calc(100vh - 68px);
+}
+
+/* Search */
+.search-bar{
+  margin-bottom:12px;
+}
+
+.search-bar input{
+  width:100%;
+  min-height:46px;
+  padding:0 16px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--white);
+  color:var(--ink);
+  font-family:'Space Mono',monospace;
+  font-size:13px;
+  box-shadow:var(--shadow-sm);
+}
+
+.search-bar input:focus{
+  outline:none;
+  border-color:var(--red);
+  box-shadow:0 0 0 3px var(--red-soft);
+}
+
+.order-meta input[readonly]{
+  background:var(--line);
+  color:var(--ink-soft);
+  cursor:not-allowed;
 }
 
 /* Tabs */
@@ -811,18 +838,7 @@ header button.primary:hover{
   .product-info{padding:15px;}
 }
 
-/* =========================================================
-   RECEIPT PRINT
-   Matches the actual markup: <div id="printArea"><div class="receipt">…
 
-   Why it printed multiple pages: `visibility:hidden` on the rest of
-   the page still leaves those elements occupying layout space, and
-   the on-screen POS UI reflows very tall when squeezed into an 80mm
-   print width. The print engine then paginates across that invisible
-   height. Fix: `display:none` the real UI sections so they're
-   removed from layout entirely — the page then shrinks to exactly
-   the receipt's height.
-   ========================================================= */
 #printArea{display:none;}
 
 @media print{
@@ -842,7 +858,9 @@ header button.primary:hover{
   header,
   .app,
   .payment-modal,
-  .payment-toast{
+  .payment-toast,
+  #dashboard,
+  .password-gate{
     display:none !important;
   }
 
