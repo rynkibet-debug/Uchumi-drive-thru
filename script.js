@@ -50,6 +50,7 @@ const menu = [
     { id:40, name:"Chicken", price:250, image:"images/menu/Mains/5.jpg" },
     { id:41, name:"Fish (tilapia)", price:600, image:"images/menu/Mains/6.jpg" },
     { id:42, name:"Bone soup", price:50, image:"images/menu/Mains/7.jpg" },
+    { id:137, name:"Minji", price:150, image:"images/menu/Mains/8.jpg" },
   ]},
   { cat: "Chips & more", items: [
     { id:43, name:"Chips & chicken fry", price:400, image:"images/menu/Chips/1.jpg" },
@@ -60,7 +61,7 @@ const menu = [
     { id:46, name:"Cabbage/Sukuma wiki", price:50, image:"images/menu/Veges/1.jpg" },
     { id:47, name:"Kienyeji vegetables", price:80, image:"images/menu/Veges/2.jpg" },
     { id:48, name:"Githeri", price:150, image:"images/menu/Veges/3.jpg" },
-    { id:49, name:"Pilau", price:270, image:"images/menu/Veges/4.jpg" },
+    { id:49, name:"Pilau", price:250, image:"images/menu/Veges/4.jpg" },
     { id:50, name:"Beans/Ndengu", price:90, image:"images/menu/Veges/5.jpg" },
     { id:51, name:"Rice", price:80, image:"images/menu/Veges/6.jpg" },
     { id:52, name:"Chapati", price:30, image:"images/menu/Veges/7.jpg" },
@@ -131,6 +132,7 @@ const menu = [
     { id:107, name:"Tea masala", price:100, image:"images/menu/Break bev/9.jpg" },
     { id:108, name:"Dawa, regular", price:250, image:"images/menu/Break bev/10.jpg" },
     { id:109, name:"Dawa, large", price:300, image:"images/menu/Break bev/11.jpg" },
+    { id:138, name:"Uchumi tea, large", price:50, image:"images/menu/Break bev/12.jpg" },
   ]},
   { cat: "Sodas & juice", items: [
     { id:110, name:"Coke, 350ml", price:50, image:"images/menu/ColdDrinks/1.jpg" },
@@ -163,7 +165,20 @@ const menu = [
     { id:135, name:"Dasani, 1L", price:60, image:"images/menu/Water/6.jpg" },
     { id:136, name:"Aquamist, 1L", price:85, image:"images/menu/Water/6.jpg" },
   ]},
-];
+{ cat: "staff prices", items: [
+{ id:139,name:"Chapati & Beans/Ndengu", price:110, image:"images/menu/ChapatiCombos/7.jpg" },
+{ id:140, name:"Chapati & Beef", price:300, image:"images/menu/ChapatiCombos/1.jpg" },
+{ id:141, name:"Rice & Beef", price:360, image:"images/menu/RiceCombos/1.jpg" },
+{ id:142, name:"Ugali & Beef", price:320, image:"images/menu/UgaliCombos/1.jpg" },
+{ id:143, name:"Rice & Beans/Ndengu", price:110, image:"images/menu/RiceCombos/6.jpg" },
+{ id:144, name:"Coke, 350ml", price:40, image:"images/menu/ColdDrinks/1.jpg" },
+{ id:145, name:"Fanta orange, 350ml", price:40, image:"images/menu/ColdDrinks/4.jpg" },
+{ id:146, name:"Fanta blackcurrant, 350ml", price:40, image:"images/menu/ColdDrinks/2.jpg" },
+{ id:147, name:"Fanta passion, 300ml", price:40, image:"images/menu/ColdDrinks/8.jpg" },
+{ id:148, name:"Sprite, 350ml", price:40, image:"images/menu/ColdDrinks/3.jpg" },
+{ id:149, name:"krest, 350ml", price:40, image:"images/menu/ColdDrinks/13.jpg" },
+]
+}];
 
 let activeCat = 0;
 let cart = [];
@@ -378,16 +393,44 @@ function newBill(){
 }
 
 
+/* Shared by openOrderFlow and cancelOrderFlow: single branch, so the
+   last 3 digits of an Order ID (e.g. "007") are enough on their own.
+   Tries today's ticket first (the common case), then falls back to
+   the most recent order on any date ending in those digits. */
+function resolveOrderByDigits(digitsInput){
+  const digits = digitsInput.trim().replace(/\D/g, '').padStart(3, '0');
+  if(!digits) return { digits: null, order: null };
+
+  const orders = loadOrders();
+  const todayKey = dateStr(new Date()).replace(/-/g, '');
+  const todaysId = BRANCH_CODE + '-' + todayKey + '-' + digits;
+
+  let order = orders.find(o => o.orderId === todaysId);
+  if(!order){
+    const suffix = '-' + digits;
+    const matches = orders
+      .filter(o => o.orderId && o.orderId.endsWith(suffix))
+      .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+    order = matches[0];
+  }
+
+  return { digits, order };
+}
+
 function openOrderFlow(){
   if(cart.length && !confirm('Loading another order replaces the items currently in the bill. Continue?')) return;
 
-  const idInput = prompt('Enter the Order ID to open (printed on the receipt):');
-  if(!idInput) return;
-  const orderId = idInput.trim();
+  const digitsInput = prompt('Enter the last 3 digits of the Order ID (e.g. 007):');
+  if(!digitsInput) return;
 
-  const order = loadOrders().find(o => o.orderId === orderId);
+  const { digits, order } = resolveOrderByDigits(digitsInput);
+  if(!digits){
+    alert('Enter the digits from the Order ID, e.g. 007.');
+    return;
+  }
+
   if(!order){
-    alert('No order with that ID was found on this device.');
+    alert('No order found ending in ' + digits + '.');
     return;
   }
   if(order.status === 'CANCELLED'){
@@ -549,8 +592,14 @@ function saveOrRefreshOrder(total){
 
 
 function cancelOrderFlow(){
-  const orderId = prompt('Enter the Order ID to cancel (printed on the receipt):');
-  if(!orderId) return;
+  const digitsInput = prompt('Enter the last 3 digits of the Order ID to cancel (e.g. 007):');
+  if(!digitsInput) return;
+
+  const { digits, order } = resolveOrderByDigits(digitsInput);
+  if(!digits){
+    alert('Enter the digits from the Order ID, e.g. 007.');
+    return;
+  }
 
   const pin = prompt('Enter Manager PIN:');
   if(pin === null) return;
@@ -561,10 +610,8 @@ function cancelOrderFlow(){
     return;
   }
 
-  const orders = loadOrders();
-  const order = orders.find(o => o.orderId === orderId.trim());
   if(!order){
-    alert('No order with that ID was found on this device.');
+    alert('No order found ending in ' + digits + '.');
     return;
   }
   if(order.status === 'CANCELLED'){
@@ -574,7 +621,7 @@ function cancelOrderFlow(){
 
   order.status = 'CANCELLED';
   order.cancelledAt = new Date().toISOString();
-  saveOrders(orders);
+  saveOrders(loadOrders().map(o => o.orderId === order.orderId ? order : o));
   attemptSync(order);
   showToast('Order ' + order.orderId + ' cancelled');
 }
